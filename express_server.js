@@ -2,10 +2,14 @@ const express = require('express'); // Imports the express module
 const app = express();
 const PORT = 8080; // Default port 8080
 
+// Setting EJS as the view engine
+app.set("view engine", "ejs");
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+
 
 // Get request to root path "/"
 app.get("/", (req, res) => {
