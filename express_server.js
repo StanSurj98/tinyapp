@@ -12,6 +12,11 @@ app.get("/", (req, res) => {
   res.send(`Hello!`);
 });
 
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase); // Takes the urlDatabase and display serialized json at this path
+});
+
+
 // This tells our server to listen on our port
 app.listen(PORT, () => {
   console.log(`Example app listening on port: ${PORT}!`);
