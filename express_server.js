@@ -10,6 +10,11 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+// ----Middleware----
+// This parses the data from a Buffer data type to a string, must be BEFORE routing code
+app.use(express.urlencoded({ extended: true })); 
+// will add data to "request" object under the key "body".
+
 
 // Get request to root path "/"
 app.get("/", (req, res) => {
@@ -28,6 +33,17 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
   // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
   res.render("urls_index", templateVars); // that's why we don't need extension or path
+});
+
+// Need to create a response for the form POST method, otherwise we get nothing
+app.post('/urls', (req, res) => {
+  console.log(req.body); // Logs POST request body to the console
+  res.send(`Ok`); // respond with 'ok' - will change later
+});
+
+// ORDER matters here, if we don't put this above /urls/:id -> Express will think "new" is a route parameter and handle it like below
+app.get("/urls/new", (req, res) => {
+  res.render('urls_new');
 });
 
 // New endpoint to page showing shortened URL. "/:id" -> ROUTE parameter the id is added to req.params.id in express and will display as the unique shortened id in the search bar
