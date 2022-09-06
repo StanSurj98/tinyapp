@@ -28,10 +28,17 @@ app.use(express.urlencoded({ extended: true }));
 // ----Routing Codes----
 // 
 
+// DELETE - POST method to /urls/:id/delete, responding to POST requests from buttons
+app.post("/urls/:id/delete", (req, res) => {
+  delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
+  res.redirect('/urls'); // happy path redirects us to main urls page
+});
+
+// BROWSE - GET method to /urls, renders our template that shows an index of all urls
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
   // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
-  res.render("urls_index", templateVars); // that's why we don't need extension or path
+  res.render("urls_index", templateVars);
 });
 
 // Need to create a response for the form POST method, otherwise we get nothing
