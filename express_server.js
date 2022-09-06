@@ -1,5 +1,6 @@
 const express = require('express'); // Imports the express module
 const app = express();
+const morgan = require('morgan');
 const PORT = 8080; // Default port 8080
 
 // Random string generator
@@ -14,6 +15,8 @@ const urlDatabase = {
 };
 
 // ----Middleware----
+app.use(morgan("dev")); // setup morgan to console.log for us
+
 // This parses the data from a Buffer data type to a string, must be BEFORE routing code
 app.use(express.urlencoded({ extended: true })); 
 // will add data to "request" object under the key "body".
@@ -63,7 +66,7 @@ app.get("/urls/:id", (req, res) => {
 // GET request to redirect now from the short url to the proper website linked to longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-
+  // we can now click the hyperlink on urls_show page, this is because of urls_show.ejs
   res.redirect(longURL);
 });
 
