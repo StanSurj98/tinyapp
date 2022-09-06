@@ -28,7 +28,14 @@ app.use(express.urlencoded({ extended: true }));
 // ----Routing Codes----
 // 
 
-// DELETE - POST method to /urls/:id/delete, responding to POST requests from buttons
+// EDIT - POST method to /urls/:id/edit
+app.post("/urls/:id/edit", (req, res) => {
+  // console.log(req.body); // shows an object with longURL as a key:val 
+  urlDatabase[req.params.id] = req.body.longURL; // need to update the longURL at SAME id
+  res.redirect('/urls'); // happy path redirects us back to main page
+});
+
+// DELETE - POST method to /urls/:id/delete, responding to POST from the delete buttons
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
   res.redirect('/urls'); // happy path redirects us to main urls page
@@ -41,13 +48,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// Need to create a response for the form POST method, otherwise we get nothing
+// ADD - POST to /urls, creates new shortURL and posts another saved URL
 app.post('/urls', (req, res) => {
   // generate random string whenever a POST request sent, saves to urlDatabase the pair
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
 
-  res.redirect(`/urls/${shortURL}`); // respond with 'ok' - will change later
+  res.redirect(`/urls/${shortURL}`);
 });
 
 // ORDER matters here, if we don't put this above /urls/:id -> Express will think "new" is a route parameter and handle it like below
@@ -63,7 +70,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// GET request to redirect now from the short url to the proper website linked to longURL
+// READ - GET, redirects shortURL href to the website at longURL
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   // we can now click the hyperlink on urls_show page, this is because of urls_show.ejs
