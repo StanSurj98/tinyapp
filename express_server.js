@@ -14,7 +14,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+// 
 // ----Middleware----
+// 
 app.use(morgan("dev")); // setup morgan to console.log for us
 
 // This parses the data from a Buffer data type to a string, must be BEFORE routing code
@@ -22,18 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 // will add data to "request" object under the key "body".
 
 
-// Get request to root path "/"
-app.get("/", (req, res) => {
-  res.send(`Hello!`);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n"); // renders HTML on client side
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase); // Takes the urlDatabase and display serialized json at this path
-});
+// 
+// ----Routing Codes----
+// 
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
