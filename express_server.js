@@ -2,6 +2,9 @@ const express = require('express'); // Imports the express module
 const app = express();
 const PORT = 8080; // Default port 8080
 
+// Random string generator
+const generateRandomString = require('./generateRandomString');
+
 // Setting EJS as the view engine
 app.set("view engine", "ejs");
 
