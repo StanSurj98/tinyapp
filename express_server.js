@@ -40,8 +40,11 @@ app.get("/urls", (req, res) => {
 
 // Need to create a response for the form POST method, otherwise we get nothing
 app.post('/urls', (req, res) => {
-  console.log(req.body); // Logs POST request body to the console
-  res.send(`Ok`); // respond with 'ok' - will change later
+  // generate random string whenever a POST request sent, saves to urlDatabase the pair
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+
+  res.redirect(`/urls/${shortURL}`); // respond with 'ok' - will change later
 });
 
 // ORDER matters here, if we don't put this above /urls/:id -> Express will think "new" is a route parameter and handle it like below
@@ -55,6 +58,13 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   // pass this data onto the urls_show.ejs in views
   res.render("urls_show", templateVars);
+});
+
+// GET request to redirect now from the short url to the proper website linked to longURL
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+
+  res.redirect(longURL);
 });
 
 // This tells our server to listen on our port
