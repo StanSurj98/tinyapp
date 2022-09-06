@@ -30,7 +30,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
-  // console.log(req.body); // shows an object with longURL as a key:val 
   urlDatabase[req.params.id] = req.body.longURL; // need to update the longURL at SAME id
   res.redirect('/urls'); // happy path redirects us back to main page
 });
@@ -39,13 +38,6 @@ app.post("/urls/:id/edit", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
   res.redirect('/urls'); // happy path redirects us to main urls page
-});
-
-// BROWSE - GET method to /urls, renders our template that shows an index of all urls
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
-  // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
-  res.render("urls_index", templateVars);
 });
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL
@@ -57,21 +49,29 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// ORDER matters here, if we don't put this above /urls/:id -> Express will think "new" is a route parameter and handle it like below
+// BROWSE - GET method to /urls, renders our template that shows an index of all urls
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
+  // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
+  res.render("urls_index", templateVars);
+});
+
+// READ - GET method to /urls/new, 
 app.get("/urls/new", (req, res) => {
+  // we want to READ a page where we can submit a form to create a NEW shortened URL
   res.render('urls_new');
 });
 
-// New endpoint to page showing shortened URL. "/:id" -> ROUTE parameter the id is added to req.params.id in express and will display as the unique shortened id in the search bar
+// READ - GET to /urls/("/:id") -> ROUTE parameter added to req.params.id in express
 app.get("/urls/:id", (req, res) => {
-  // fetches the long URL that matches the short id url
+  // fetches the longURL at key of shortURL
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
-  // pass this data onto the urls_show.ejs in views
+  // we want to render the page that shows us our single url
   res.render("urls_show", templateVars);
 });
 
 // READ - GET, redirects shortURL href to the website at longURL
-app.get("/u/:id", (req, res) => {
+app.get("/u/:id", (req, res) => { // since also a GET method, unique path of /u/:id
   const longURL = urlDatabase[req.params.id];
   // we can now click the hyperlink on urls_show page, this is because of urls_show.ejs
   res.redirect(longURL);
