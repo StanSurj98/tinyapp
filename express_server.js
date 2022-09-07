@@ -55,50 +55,45 @@ app.use(cookieParser());
 // ----POST----
 // 
 
+// ADD - POST, Handles registration, sets new cookie for new users, add to database
 app.post("/register", (req, res) => {
-  console.log(req.body);
-  // create random ID with earlier function
-  const user_id = generateRandomString();
+  const user_id = generateRandomString(); // new user_id string
   const user_email = req.body.email;
   const user_password = req.body.password;
-  // 1. add new user obj to global users database
-  // include id, email, password
-  users[user_id] = {
+  users[user_id] = {  // adding the new user to users database
     id: user_id,
     email: user_email,
     password: user_password,
   };
-  console.log(users);
-  // 2. set new cookie for user_id, containing newly random ID
-    // make sure to test it works and persists
-  res.cookie('user_id', user_id);
-  // 3. redirect to /urls
+  console.log(users); // to see if new user is added to global object
+  res.cookie('user_id', user_id); // set new cookie for user_id
   res.redirect("/urls");
 });
 
 // EDIT - POST method to /logout for logging out and deleting our cookies
 app.post('/logout', (req, res) => {
-  res.clearCookie("username"); // clears cookie by its name
+  res.clearCookie("user_id"); // clears cookie by its name
+  console.log(users);
   res.redirect('/urls');
 });
 
 // EDIT - POST method to /login for logging in with cookies
 app.post('/login', (req, res) => {
-  // res.cookie(name, value, [,options])
-  res.cookie("username", req.body.username);
+  // res.cookie(name, value, [,options]) <-- the params
+  res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
 });
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL; // need to update the longURL at SAME id
-  res.redirect('/urls'); // happy path redirects us back to main page
+  urlDatabase[req.params.id] = req.body.longURL; // updates the longURL but not shortURL
+  res.redirect('/urls');
 });
 
 // DELETE - POST method to /urls/:id/delete, responding to POST from the delete buttons
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
-  res.redirect('/urls'); // happy path redirects us to main urls page
+  res.redirect('/urls');
 });
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL
@@ -111,30 +106,47 @@ app.post('/urls', (req, res) => {
 });
 
 // 
-// ---- GET routers ----
+// ---- RENDERING Get routers ----
 // 
 
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if(userObj) {
+    return res.redirect('/urls');
+  }
+
   const templateVars = { 
-    username: req.cookies["username"],
+    user: null,
   };
   res.render('urls_register', templateVars);
 });
 
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
 app.get("/urls", (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if (!userObj) {
+    res.redirect('/register')
+  }
   const templateVars = { 
-    username: req.cookies["username"],
-    urls: urlDatabase }; // when using EJS template, MUST pass an object
+    user: userObj,
+    urls: urlDatabase
+  }; // when using EJS template, MUST pass an object
   // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
   res.render("urls_index", templateVars);
 });
 
 // READ - GET method to /urls/new, 
 app.get("/urls/new", (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if (!userObj) {
+    res.redirect('/register');
+  }
   const templateVars = {
-    username: req.cookies["username"],
+    user: userObj,
   }
   // we want to READ a page where we can submit a form to create a NEW shortened URL
   res.render('urls_new', templateVars);
@@ -142,11 +154,16 @@ app.get("/urls/new", (req, res) => {
 
 // READ - GET to /urls/("/:id") -> ROUTE parameter added to req.params.id in express
 app.get("/urls/:id", (req, res) => {
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if (!userObj) {
+    res.redirect('/register');
+  }
   // fetches the longURL at key of shortURL
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"],
+    user: userObj,
   };
   // we want to render the page that shows us our single url
   res.render("urls_show", templateVars);

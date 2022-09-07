@@ -43,12 +43,12 @@
               <td><%= urls[id] %></td>
               <td> <!--Falls under new column of Edit and is a POST form to edit-->
                 <form method="GET" action="/urls/<%= id %>">
-                  <button class="btn btn-primary" type="submit">Edit</button>
+                  <button class="btn btn-warning" type="submit">Edit</button>
                 </form>
               </td>
               <td> <!--Falls under new column of Delete and is a POST form to delete-->
                 <form method="POST" action="/urls/<%= id %>/delete">
-                  <button class="btn btn-primary" type="submit">Delete</button>
+                  <button class="btn btn-danger" type="submit">Delete</button>
                 </form>
               </td>
             </tr>
