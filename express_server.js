@@ -56,16 +56,24 @@ app.use(cookieParser());
 // 
 
 app.post("/register", (req, res) => {
+  console.log(req.body);
+  // create random ID with earlier function
+  const user_id = generateRandomString();
+  const user_email = req.body.email;
+  const user_password = req.body.password;
   // 1. add new user obj to global users database
-    // include id, email, password
-    // create random ID with earlier function
-  
+  // include id, email, password
+  users[user_id] = {
+    id: user_id,
+    email: user_email,
+    password: user_password,
+  };
+  console.log(users);
   // 2. set new cookie for user_id, containing newly random ID
     // make sure to test it works and persists
-    
+  res.cookie('user_id', user_id);
   // 3. redirect to /urls
-
-
+  res.redirect("/urls");
 });
 
 // EDIT - POST method to /logout for logging out and deleting our cookies
