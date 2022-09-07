@@ -1,6 +1,7 @@
 const express = require('express'); // Imports the express module
 const app = express();
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const PORT = 8080; // Default port 8080
 
 // Random string generator
@@ -23,10 +24,20 @@ app.use(morgan("dev")); // setup morgan to console.log for us
 app.use(express.urlencoded({ extended: true })); 
 // will add data to "request" object under the key "body".
 
+// CookieParser for express
+app.use(cookieParser());
+
 
 // 
 // ----Routing Codes----
 // 
+
+// ADD - POST method to /login for logging in with cookies
+app.post('/login', (req, res) => {
+  // res.cookie(name, value, [,options])
+  res.cookie("username", req.body.username);
+  res.redirect("/urls");
+});
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
@@ -51,21 +62,30 @@ app.post('/urls', (req, res) => {
 
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase }; // when using EJS template, MUST pass an object
+  const templateVars = { 
+    username: req.cookies["username"],
+    urls: urlDatabase }; // when using EJS template, MUST pass an object
   // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
   res.render("urls_index", templateVars);
 });
 
 // READ - GET method to /urls/new, 
 app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"],
+  }
   // we want to READ a page where we can submit a form to create a NEW shortened URL
-  res.render('urls_new');
+  res.render('urls_new', templateVars);
 });
 
 // READ - GET to /urls/("/:id") -> ROUTE parameter added to req.params.id in express
 app.get("/urls/:id", (req, res) => {
   // fetches the longURL at key of shortURL
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"],
+  };
   // we want to render the page that shows us our single url
   res.render("urls_show", templateVars);
 });
