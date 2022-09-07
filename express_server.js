@@ -51,6 +51,23 @@ app.use(cookieParser());
 // ----Routing Codes----
 // 
 
+// 
+// ----POST----
+// 
+
+app.post("/register", (req, res) => {
+  // 1. add new user obj to global users database
+    // include id, email, password
+    // create random ID with earlier function
+  
+  // 2. set new cookie for user_id, containing newly random ID
+    // make sure to test it works and persists
+    
+  // 3. redirect to /urls
+
+
+});
+
 // EDIT - POST method to /logout for logging out and deleting our cookies
 app.post('/logout', (req, res) => {
   res.clearCookie("username"); // clears cookie by its name
