@@ -1,11 +1,12 @@
+const PORT = 8080; // Default port 8080
 const express = require('express'); // Imports the express module
 const app = express();
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
-const PORT = 8080; // Default port 8080
 
-// Random string generator
+// Helper Functions
 const generateRandomString = require('./generateRandomString');
+const getUserByEmail = require('./getUserByEmail');
 
 // Setting EJS as the view engine
 app.set("view engine", "ejs");
@@ -57,23 +58,28 @@ app.use(cookieParser());
 
 // ADD - POST, Handles registration, sets new cookie for new users, add to database
 app.post("/register", (req, res) => {
-  const user_id = generateRandomString(); // new user_id string
   const user_email = req.body.email;
   const user_password = req.body.password;
+  // Edge cases: if email/pass empty OR user already exists
+  if (user_email === "" || user_password === "") {
+    return res.send("Error 400 Empty fields");
+  }
+  if (getUserByEmail(users, user_email)) return res.send("Error 400 User email exists");
+  // ---------------------------------------------------------------------
+  const user_id = generateRandomString(); // new user_id string
   users[user_id] = {  // adding the new user to users database
     id: user_id,
     email: user_email,
     password: user_password,
-  };
+  }
   console.log(users); // to see if new user is added to global object
   res.cookie('user_id', user_id); // set new cookie for user_id
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // EDIT - POST method to /logout for logging out and deleting our cookies
 app.post('/logout', (req, res) => {
   res.clearCookie("user_id"); // clears cookie by its name
-  console.log(users);
   res.redirect('/urls');
 });
 
