@@ -32,7 +32,13 @@ app.use(cookieParser());
 // ----Routing Codes----
 // 
 
-// ADD - POST method to /login for logging in with cookies
+// EDIT - POST method to /logout for logging out and deleting our cookies
+app.post('/logout', (req, res) => {
+  res.clearCookie("username"); // clears cookie by its name
+  res.redirect('/urls');
+});
+
+// EDIT - POST method to /login for logging in with cookies
 app.post('/login', (req, res) => {
   // res.cookie(name, value, [,options])
   res.cookie("username", req.body.username);
