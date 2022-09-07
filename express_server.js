@@ -10,6 +10,14 @@ const generateRandomString = require('./generateRandomString');
 // Setting EJS as the view engine
 app.set("view engine", "ejs");
 
+
+// 
+// ---- Databases ----
+// 
+const users = {
+  
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -18,6 +26,8 @@ const urlDatabase = {
 // 
 // ----Middleware----
 // 
+// NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
+
 app.use(morgan("dev")); // setup morgan to console.log for us
 
 // This parses the data from a Buffer data type to a string, must be BEFORE routing code
@@ -64,6 +74,18 @@ app.post('/urls', (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
 
   res.redirect(`/urls/${shortURL}`);
+});
+
+// 
+// ---- GET routers ----
+// 
+
+// READ - GET method for our /register form
+app.get('/register', (req, res) => {
+  const templateVars = { 
+    username: req.cookies["username"],
+  };
+  res.render('urls_register', templateVars);
 });
 
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
