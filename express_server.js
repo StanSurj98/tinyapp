@@ -47,32 +47,29 @@ app.use(express.urlencoded({ extended: true }));
 // CookieParser for express
 app.use(cookieParser());
 
-
-// 
-// ----Routing Codes----
-// 
-
 // 
 // ----POST----
 // 
 
 // ADD - POST, Handles registration, sets new cookie for new users, add to database
 app.post("/register", (req, res) => {
+  // These two below we get from the forms for register
   const user_email = req.body.email;
   const user_password = req.body.password;
-  // Edge cases: if email/pass empty OR user already exists
-  if (user_email === "" || user_password === "") {
-    return res.send("Error 400 Empty fields");
-  }
+  // if email/pass empty OR user already exists; error 400
+  if (user_email === "" || user_password === "") return res.send("Error 400 Empty fields");
   if (getUserByEmail(users, user_email)) return res.send("Error 400 User email exists");
-  // ---------------------------------------------------------------------
-  const user_id = generateRandomString(); // new user_id string
-  users[user_id] = {  // adding the new user to users database
+
+  // getting here, we can register, generate new unique id
+  const user_id = generateRandomString();
+  // add new user to global users database
+  users[user_id] = {
     id: user_id,
     email: user_email,
     password: user_password,
   }
-  console.log(users); // to see if new user is added to global object
+
+  console.log(users);// to see if new user is added to global object
   res.cookie('user_id', user_id); // set new cookie for user_id
   return res.redirect("/urls");
 });
@@ -80,40 +77,38 @@ app.post("/register", (req, res) => {
 // EDIT - POST method to /logout for logging out and deleting our cookies
 app.post('/logout', (req, res) => {
   res.clearCookie("user_id"); // clears cookie by its name
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // POST method to /login now with Authentication
 app.post('/login', (req, res) => {
   const error403 = "Error 403 The email or password is incorrect";
+  // These two below we get from the forms for login
   const user_email = req.body.email;
   const user_password = req.body.password;
   // The function returns the user obj, we will assign that to a variable in this scope
   const user = getUserByEmail(users, user_email);
 
   if (user_email === "" || user_password === "") return res.send("Error 400 Empty Field")
-  // 1. Need to compare given email with the email in the user object from database
-    // 1.1) if not found (function returns falsey) - return error 403
+  // 1. Compare entered email vs email in user object from database; error403 if not found
   if (! getUserByEmail(users, user_email)) return res.send(error403);
-  // 2. if found, compare the given password with the password in that user object
-  // 2.1) if not matching - return error 403
+  // 2. if found, compare entered password vs password in user object; error403 if !==
   if (user_password !== user.password) return res.send(error403)
   // 3. if both checks pass - set cookie to user_id value in user object from database
   res.cookie("user_id", user.id);
-  // 3.1) then redirect to /urls
-  res.redirect("/urls");
+  return res.redirect("/urls");
 });
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL; // updates the longURL but not shortURL
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // DELETE - POST method to /urls/:id/delete, responding to POST from the delete buttons
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL
@@ -122,11 +117,11 @@ app.post('/urls', (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
 
-  res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 // 
-// ---- RENDERING Get routers ----
+// ---- GET RENDERING routers ----
 // 
 
 // READ - GET method for /login page
@@ -217,4 +212,5 @@ app.get("/u/:id", (req, res) => { // since also a GET method, unique path of /u/
 // This tells our server to listen on our port
 app.listen(PORT, () => {
   console.log(`Example app listening on port: ${PORT}!`);
+  console.log(users); // Want to see the initial users database
 });
