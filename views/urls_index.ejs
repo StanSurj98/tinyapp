@@ -36,11 +36,12 @@
           </tr>
         </thead>
         <tbody>
-          <!--Loops through our urlDatabase, at each shortURL, corresponding longURL-->
-          <% for (let shortURL in urlDatabase) { %>
+          <!-- if empty object was passed, we should display empty table -->
+          <!--Loops through our thisUserURLs, at each shortURL, corresponding longURL-->
+          <% for (let shortURL in thisUserURLs) { %>
             <tr>
               <td><%= shortURL %></td>
-              <td><%= urlDatabase[shortURL].longURL %></td>
+              <td><%= thisUserURLs[shortURL].longURL %></td>
               <td> <!--Falls under new column of Edit and is a POST form to edit-->
                 <form method="GET" action="/urls/<%= shortURL %>">
                   <button class="btn btn-warning" type="submit">Edit</button>

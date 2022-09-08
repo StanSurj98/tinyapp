@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 // Helper Functions
 const generateRandomString = require('./generateRandomString');
 const getUserByEmail = require('./getUserByEmail');
+const urlsForUser = require('./urlsForUser');
 
 // Setting EJS as the view engine
 app.set("view engine", "ejs");
@@ -109,9 +110,18 @@ app.post('/login', (req, res) => {
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
+  // Anytime GET request sent to /urls - we check for cookies
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id]; // that cookie corresponds to userObj
+  // if userObj is falsey (aka. we not logged in)
+  if (! userObj) {
+    // return res.redirect('/login');
+    return res.send('Error 400: You are not logged in');
+  }
   const shortURL = req.params.id;
+  const thisUserURLs = urlsForUser(user_id, urlDatabase);
   // changed this, shortURLs are now objects themselves. req.body.longURL is still the submitted form data for new longURL
-  urlDatabase[shortURL].longURL = req.body.longURL; // updates the longURL but not shortURL
+  thisUserURLs[shortURL].longURL = req.body.longURL; // updates the longURL but not shortURL
   return res.redirect('/urls');
 });
 
@@ -205,13 +215,21 @@ app.get("/urls", (req, res) => {
   const userObj = users[user_id]; // that cookie corresponds to userObj
   // if userObj is falsey (aka. we not logged in)
   if (! userObj) {
-    return res.redirect('/login');
+    // return res.redirect('/login');
+    return res.send('Error 400: You are not logged in');
   }
+
+  // We must filter urls by the logged in user's cookies ONLY
+  // 1. create our helper function to filter the relevant user_id's URLs only
+  // 2. then pass those as the template vars below into the urls_index view
+  // 3. what about logged in and empty object?
+    // create a check, if empty object, don't display table in urls_index view
+  const thisUserURLs = urlsForUser(user_id, urlDatabase);
 
   // when using EJS template, MUST pass an object
   const templateVars = { 
     user: userObj,
-    urlDatabase: urlDatabase
+    thisUserURLs: thisUserURLs,
   };
   // otherwise, redirect to /urls and render the index template
   return res.render("urls_index", templateVars);
@@ -244,9 +262,10 @@ app.get("/urls/:id", (req, res) => {
   }
   // fetches the longURL at key of shortURL
   const shortURL = req.params.id;
+  const thisUserURLs = urlsForUser(user_id, urlDatabase);
   const templateVars = {
     id: shortURL,
-    longURL: urlDatabase[shortURL].longURL,
+    longURL: thisUserURLs[shortURL].longURL,
     user: userObj,
   };
   // we want to render the page that shows us our single url
