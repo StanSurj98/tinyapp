@@ -88,6 +88,7 @@ app.post('/login', (req, res) => {
   const user_email = req.body.email;
   const user_password = req.body.password;
   if (user_email === "" || user_password === "") return res.send("Error 400 Empty Field")
+  console.log(req.body);
   // res.cookie(name, value, [,options]) <-- the params
   res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
@@ -120,22 +121,34 @@ app.post('/urls', (req, res) => {
 
 // READ - GET method for /login page
 app.get('/login', (req, res) => {
-
-  res.render('urls_login');
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  // checks if userObj exists, we should be logged in at this point
+  if(userObj) {
+    // redirects to /urls if so
+    return res.redirect('/urls');
+  }
+  const templateVars = {
+    user: null, // at this point if we're at the login page, the headers should not have any user data yet
+  }
+  return res.render('urls_login', templateVars);
 });
 
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
+  // checks if userObj exists, we should be logged in at this point
   if(userObj) {
+    // redirects to /urls if so
     return res.redirect('/urls');
   }
 
   const templateVars = { 
     user: null,
   };
-  res.render('urls_register', templateVars);
+  // otherwise we just render the register page
+  return res.render('urls_register', templateVars);
 });
 
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
@@ -143,14 +156,14 @@ app.get("/urls", (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   if (!userObj) {
-    res.redirect('/register')
+    return res.redirect('/register');
   }
   const templateVars = { 
     user: userObj,
     urls: urlDatabase
   }; // when using EJS template, MUST pass an object
   // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
-  res.render("urls_index", templateVars);
+  return res.render("urls_index", templateVars);
 });
 
 // READ - GET method to /urls/new, 
@@ -158,13 +171,13 @@ app.get("/urls/new", (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   if (!userObj) {
-    res.redirect('/register');
+    return res.redirect('/register');
   }
   const templateVars = {
     user: userObj,
   }
   // we want to READ a page where we can submit a form to create a NEW shortened URL
-  res.render('urls_new', templateVars);
+  return res.render('urls_new', templateVars);
 });
 
 // READ - GET to /urls/("/:id") -> ROUTE parameter added to req.params.id in express
@@ -172,7 +185,7 @@ app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   if (!userObj) {
-    res.redirect('/register');
+    return res.redirect('/register');
   }
   // fetches the longURL at key of shortURL
   const templateVars = {
@@ -181,14 +194,14 @@ app.get("/urls/:id", (req, res) => {
     user: userObj,
   };
   // we want to render the page that shows us our single url
-  res.render("urls_show", templateVars);
+  return res.render("urls_show", templateVars);
 });
 
 // READ - GET, redirects shortURL href to the website at longURL
 app.get("/u/:id", (req, res) => { // since also a GET method, unique path of /u/:id
   const longURL = urlDatabase[req.params.id];
   // we can now click the hyperlink on urls_show page, this is because of urls_show.ejs
-  res.redirect(longURL);
+  return res.redirect(longURL);
 });
 
 // This tells our server to listen on our port
