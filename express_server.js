@@ -29,8 +29,14 @@ const users = {
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "userRandomID",
+  }
 };
 
 // 
@@ -103,13 +109,22 @@ app.post('/login', (req, res) => {
 
 // EDIT - POST method to /urls/:id/edit
 app.post("/urls/:id/edit", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL; // updates the longURL but not shortURL
+  const shortURL = req.params.id;
+  // changed this, shortURLs are now objects themselves. req.body.longURL is still the submitted form data for new longURL
+  urlDatabase[shortURL].longURL = req.body.longURL; // updates the longURL but not shortURL
   return res.redirect('/urls');
 });
 
 // DELETE - POST method to /urls/:id/delete, responding to POST from the delete buttons
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id]; // deletes the property at req.params.id (shortURL)
+  // must be logged in to delete
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if (! userObj) return res.send('Error 400: You are not logged in');
+
+
+  const shortURL = req.params.id;
+  delete urlDatabase[shortURL]; // deletes the entire object in urlDatabase
   return res.redirect('/urls');
 });
 
@@ -123,8 +138,11 @@ app.post('/urls', (req, res) => {
 
   // if userObj does exist, we create the new URL
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-
+  // at the NEW shortURL key, we will add BOTH the property longURL AND the userID property
+  urlDatabase[shortURL] = {
+    longURL: req.body.longURL,
+    userID: user_id, // this is found from the cookies
+  };
   return res.redirect(`/urls/${shortURL}`);
 });
 
@@ -193,7 +211,7 @@ app.get("/urls", (req, res) => {
   // when using EJS template, MUST pass an object
   const templateVars = { 
     user: userObj,
-    urls: urlDatabase
+    urlDatabase: urlDatabase
   };
   // otherwise, redirect to /urls and render the index template
   return res.render("urls_index", templateVars);
@@ -225,9 +243,10 @@ app.get("/urls/:id", (req, res) => {
     return res.redirect('/register');
   }
   // fetches the longURL at key of shortURL
+  const shortURL = req.params.id;
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    id: shortURL,
+    longURL: urlDatabase[shortURL].longURL,
     user: userObj,
   };
   // we want to render the page that shows us our single url
@@ -236,13 +255,13 @@ app.get("/urls/:id", (req, res) => {
 
 // READ - GET, redirects shortURL href to the website at longURL
 app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id; // the request shortURL typed into the bar
-  const longURL = urlDatabase[req.params.id]; // the VALUE at that shortURL (the longURL)
+  const reqShortURL = req.params.id; // the request shortURL typed into the bar
   
   // 1. let's check if the request url exists in our database
-  for (const key in urlDatabase) {
-    // if GIVEN/REQUESTED shortURL matches the shortURL KEY in database...
-    if (shortURL === key) {
+  for (const shortURL in urlDatabase) {
+    const longURL = urlDatabase[shortURL].longURL; // the VALUE at db shortURL (the longURL)
+    // if REQUESTED shortURL matches the db shortURL
+    if (reqShortURL === shortURL) {
       // we must check for happy path, otherwise the first time we don't match, we get error
       // we redirect to the VALUE of that shortURL id... the longURL it goes to
       return res.redirect(longURL);
