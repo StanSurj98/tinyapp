@@ -132,15 +132,29 @@ app.post("/urls/:id/edit", (req, res) => {
 
 // DELETE - POST to /urls/:id/delete, handles delete buttons with Auth
 app.post("/urls/:id/delete", (req, res) => {
-  // must be logged in to delete
+  // 1. checks if you're logged in
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   if (! userObj) return res.send('Error 400: You are not logged in');
 
-
   const shortURL = req.params.id;
   delete urlDatabase[shortURL]; // deletes the entire object in urlDatabase
   return res.redirect('/urls');
+});
+
+// UPDATE - POST /urls/:id, should be authenticated users only and if id doesn't exist, error
+app.post('/urls/:id', (req, res) => {
+  // 1. checks if you're logged in
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  if (! userObj) return res.send('Error 400 You are not logged in');
+
+  // 2. checks if you own the particular URL
+  const shortURL = req.params.id;
+  const thisUserURLs = urlsForUser(user_id, urlDatabase);
+  if(!thisUserURLs[shortURL]) {
+    return res.status(404).send('Could not find URL in your account');
+  }
 });
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL with Auth
