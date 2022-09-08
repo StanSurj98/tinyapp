@@ -85,6 +85,9 @@ app.post('/logout', (req, res) => {
 
 // EDIT - POST method to /login for logging in with cookies
 app.post('/login', (req, res) => {
+  const user_email = req.body.email;
+  const user_password = req.body.password;
+  if (user_email === "" || user_password === "") return res.send("Error 400 Empty Field")
   // res.cookie(name, value, [,options]) <-- the params
   res.cookie("user_id", req.body.user_id);
   res.redirect("/urls");
@@ -114,6 +117,12 @@ app.post('/urls', (req, res) => {
 // 
 // ---- RENDERING Get routers ----
 // 
+
+// READ - GET method for /login page
+app.get('/login', (req, res) => {
+
+  res.render('urls_login');
+});
 
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
