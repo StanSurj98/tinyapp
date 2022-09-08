@@ -70,8 +70,8 @@ app.post("/register", (req, res) => {
   const user_email = req.body.email;
   const user_password = req.body.password;
   // if email/pass empty OR user already exists; error 400
-  if (user_email === "" || user_password === "") return res.send("Error 400 Empty fields");
-  if (getUserByEmail(users, user_email)) return res.send("Error 400 User email exists");
+  if (!user_email || !user_password) return res.status(400).send("Empty Field");
+  if (getUserByEmail(users, user_email)) return res.status(400).send("Enter a unique Email address");
 
   // getting here, we can register, generate new unique id
   const user_id = generateRandomString();
@@ -95,16 +95,15 @@ app.post('/logout', (req, res) => {
 
 // Handles /login with Authentication
 app.post('/login', (req, res) => {
-  const error403 = "Error 403 The email or password is incorrect";
   // These two below we get from the forms for login
   const user_email = req.body.email;
   const user_password = req.body.password;
   // The function returns the user obj, we will assign that to a variable in this scope
   const user = getUserByEmail(users, user_email);
 
-  if (user_email === "" || user_password === "") return res.send("Error 400 Empty Field")
+  if (!user_email|| !user_password) return res.status(400).send("Empty Field");
   // 1. Compare entered email vs email in user object from database; error403 if not found
-  if (! getUserByEmail(users, user_email)) return res.send(error403);
+  if (! getUserByEmail(users, user_email)) return res.status(403).send("Invalid Credentials");
   // 2. if found, compare entered password vs password in user object; error403 if !==
   if (user_password !== user.password) return res.send(error403)
   // 3. if both checks pass - set cookie to user_id value in user object from database
@@ -261,14 +260,20 @@ app.get("/urls/new", (req, res) => {
 
 // READ - GET /urls/("/:id") -> ROUTE param in req.params.id (Express feature)
 app.get("/urls/:id", (req, res) => {
+  // checks login cookies
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   if (!userObj) {
-    return res.redirect('/register');
+    // return res.redirect('/register');
+    return res.status(400).send('You are not logged in');
   }
-  // fetches the longURL at key of shortURL
+
+  // checks THIS user's unique URLs
   const shortURL = req.params.id;
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
+  if(!thisUserURLs[shortURL]) {
+    return res.status(404).send('Could not find URL in your account');
+  }
   const templateVars = {
     id: shortURL,
     longURL: thisUserURLs[shortURL].longURL,
