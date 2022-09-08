@@ -95,8 +95,10 @@ app.post('/login', (req, res) => {
   // 2. if found, compare entered password vs password in user object; error403 if !==
   if (user_password !== user.password) return res.send(error403)
   // 3. if both checks pass - set cookie to user_id value in user object from database
-  res.cookie("user_id", user.id);
-  return res.redirect("/urls");
+  if (user_email === user.email && user_password === user.password) {
+    res.cookie("user_id", user.id);
+    return res.redirect("/urls");
+  }
 });
 
 // EDIT - POST method to /urls/:id/edit
