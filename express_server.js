@@ -5,8 +5,9 @@ const PORT = 8080; // Default port 8080
 const express = require('express'); // Imports the express module
 const app = express();
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session')
+
 
 
 // 
@@ -60,8 +61,15 @@ app.use(express.urlencoded({ extended: true }));
 // NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
 app.use(morgan("dev")); // setup morgan to console.log for us
 
-// CookieParser for express
-app.use(cookieParser());
+// CookieSession for encrypted cookies
+app.use(cookieSession({
+  name: 'session',
+  keys: ["superSecretCookieSession"],
+
+  // Cookie Options
+  maxAge: 10 * 60 * 1000 // 10 mins
+}))
+
 
 // 
 // ----- POST Routes -----
@@ -89,14 +97,15 @@ app.post("/register", (req, res) => {
   }
 
   console.log(users);// to see if new user is added to global object
-  res.cookie('user_id', user_id); // set new cookie for user_id
+  // When registering we SET the session cookie
+  req.session.user_id = user_id;
   return res.redirect("/urls");
 });
 
 // Handles /logout && clears cookies
 app.post('/logout', (req, res) => {
-  res.clearCookie("user_id"); // clears cookie by its name
-  return res.redirect('/urls');
+  req.session = null
+  return res.redirect('/login');
 });
 
 // Handles /login with Authentication
@@ -107,15 +116,16 @@ app.post('/login', (req, res) => {
   // The function returns the user obj, we will assign that to a variable in this scope
   const user = getUserByEmail(users, user_email);
 
-  if (!user_email|| !user_password) return res.status(400).send("Empty Field");
+  if (!user_email || !user_password) return res.status(400).send("Empty Field");
   // 1. Compare entered email vs email in user object from database; error403 if not found
-  if (! getUserByEmail(users, user_email)) return res.status(403).send("Invalid Credentials");
+  if (!getUserByEmail(users, user_email)) return res.status(403).send("Invalid Credentials");
   // 2. check if Hashed password is true to match or not
   const passwordMatch = bcrypt.compareSync(user_password, user.password);
   if (!passwordMatch) return res.status(403).send(`Invalid Credentials`)
   // 3. if both checks pass - set cookie to user_id value in user object from database
   if (user_email === user.email && passwordMatch) {
-    res.cookie("user_id", user.id);
+    // when logging in we set the session cookie
+    req.session.user_id = user.id;
     return res.redirect("/urls");
   }
 });
@@ -123,7 +133,7 @@ app.post('/login', (req, res) => {
 // EDIT - POST to /urls/:id/edit with Auth
 app.post("/urls/:id/edit", (req, res) => {
   // Anytime GET request sent to /urls - we check for cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id]; // that cookie corresponds to userObj
   // if userObj is falsey (aka. we not logged in)
   if (! userObj) {
@@ -140,7 +150,7 @@ app.post("/urls/:id/edit", (req, res) => {
 // DELETE - POST to /urls/:id/delete, handles delete buttons with Auth
 app.post("/urls/:id/delete", (req, res) => {
   // 1. checks if you're logged in
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   if (! userObj) return res.send('Error 400: You are not logged in');
 
@@ -152,7 +162,7 @@ app.post("/urls/:id/delete", (req, res) => {
 // UPDATE - POST /urls/:id, should be authenticated users only and if id doesn't exist, error
 app.post('/urls/:id', (req, res) => {
   // 1. checks if you're logged in
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   if (! userObj) return res.send('Error 400 You are not logged in');
 
@@ -167,7 +177,7 @@ app.post('/urls/:id', (req, res) => {
 // ADD - POST to /urls, creates new shortURL and posts another saved URL with Auth
 app.post('/urls', (req, res) => {
   // 1. checking if cookies for user_id exists
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   // 2. checking if that cookie id is a user id in our users database
   const userObj = users[user_id];
   if (! userObj) return res.send('Error 400 You are not logged in');
@@ -189,7 +199,7 @@ app.post('/urls', (req, res) => {
 // READ - GET method for /login page
 app.get('/login', (req, res) => {
   // check if logged in by checking the cookie
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   // checks if userObj exists, we should be logged in at this point
   if(userObj) {
@@ -205,7 +215,7 @@ app.get('/login', (req, res) => {
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
   // we're going to check if there is an existing user_id from the cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   // checks if userObj exists, we should be logged in at this point
   if(userObj) {
@@ -224,7 +234,7 @@ app.get('/register', (req, res) => {
 // READ - GET, redirects / to /urls w Auth || to /login w/o
 app.get('/', (req, res) => {
   // check for cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   // if userObj is falsey (not logged in)
   if (! userObj) {
@@ -237,7 +247,7 @@ app.get('/', (req, res) => {
 // BROWSE - GET, /urls, w Auth, shows index || error w/o Auth
 app.get("/urls", (req, res) => {
   // Anytime GET request sent to /urls - we check for cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id]; // that cookie corresponds to userObj
   // if userObj is falsey (aka. we not logged in)
   if (! userObj) {
@@ -264,7 +274,7 @@ app.get("/urls", (req, res) => {
 // READ - GET /urls/new w Auth || to /login w/o 
 app.get("/urls/new", (req, res) => {
   // Anytime GET request to /urls/new -> we check first for cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id]; // cookies correspond to if userObj exists
   // if userObj falsey (aka. not logged in)
   if (!userObj) {
@@ -282,7 +292,7 @@ app.get("/urls/new", (req, res) => {
 // READ - GET /urls/("/:id") -> ROUTE param in req.params.id (Express feature)
 app.get("/urls/:id", (req, res) => {
   // checks login cookies
-  const user_id = req.cookies["user_id"];
+  const user_id = req.session.user_id;
   const userObj = users[user_id];
   if (!userObj) {
     // return res.redirect('/register');
