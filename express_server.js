@@ -1,17 +1,18 @@
+// 
+// ----- Requirements -----
+// 
 const PORT = 8080; // Default port 8080
 const express = require('express'); // Imports the express module
 const app = express();
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 
-// Helper Functions
+// 
+// ----- Helper Functions -----
+// 
 const generateRandomString = require('./generateRandomString');
 const getUserByEmail = require('./getUserByEmail');
 const urlsForUser = require('./urlsForUser');
-
-// Setting EJS as the view engine
-app.set("view engine", "ejs");
-
 
 // 
 // ---- Databases ----
@@ -40,25 +41,30 @@ const urlDatabase = {
   }
 };
 
+
+
 // 
 // ----Middleware----
 // 
-// NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
 
-app.use(morgan("dev")); // setup morgan to console.log for us
+// Setting EJS as the view engine
+app.set("view engine", "ejs");
 
 // This parses the data from a Buffer data type to a string, must be BEFORE routing code
 app.use(express.urlencoded({ extended: true })); 
 // will add data to "request" object under the key "body".
 
+// NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
+app.use(morgan("dev")); // setup morgan to console.log for us
+
 // CookieParser for express
 app.use(cookieParser());
 
 // 
-// ----POST----
+// ----- POST Routes -----
 // 
 
-// ADD - POST, Handles registration, sets new cookie for new users, add to database
+// Handle /register, set cookie for new users, add to DB
 app.post("/register", (req, res) => {
   // These two below we get from the forms for register
   const user_email = req.body.email;
@@ -81,13 +87,13 @@ app.post("/register", (req, res) => {
   return res.redirect("/urls");
 });
 
-// EDIT - POST method to /logout for logging out and deleting our cookies
+// Handles /logout && clears cookies
 app.post('/logout', (req, res) => {
   res.clearCookie("user_id"); // clears cookie by its name
   return res.redirect('/urls');
 });
 
-// POST method to /login now with Authentication
+// Handles /login with Authentication
 app.post('/login', (req, res) => {
   const error403 = "Error 403 The email or password is incorrect";
   // These two below we get from the forms for login
@@ -108,7 +114,7 @@ app.post('/login', (req, res) => {
   }
 });
 
-// EDIT - POST method to /urls/:id/edit
+// EDIT - POST to /urls/:id/edit with Auth
 app.post("/urls/:id/edit", (req, res) => {
   // Anytime GET request sent to /urls - we check for cookies
   const user_id = req.cookies["user_id"];
@@ -125,7 +131,7 @@ app.post("/urls/:id/edit", (req, res) => {
   return res.redirect('/urls');
 });
 
-// DELETE - POST method to /urls/:id/delete, responding to POST from the delete buttons
+// DELETE - POST to /urls/:id/delete, handles delete buttons with Auth
 app.post("/urls/:id/delete", (req, res) => {
   // must be logged in to delete
   const user_id = req.cookies["user_id"];
@@ -138,7 +144,7 @@ app.post("/urls/:id/delete", (req, res) => {
   return res.redirect('/urls');
 });
 
-// ADD - POST to /urls, creates new shortURL and posts another saved URL
+// ADD - POST to /urls, creates new shortURL and posts another saved URL with Auth
 app.post('/urls', (req, res) => {
   // 1. checking if cookies for user_id exists
   const user_id = req.cookies["user_id"];
@@ -195,7 +201,7 @@ app.get('/register', (req, res) => {
   return res.render('urls_register', templateVars);
 });
 
-// READ - GET method that redirects / to /urls
+// READ - GET, redirects / to /urls w Auth || to /login w/o
 app.get('/', (req, res) => {
   // check for cookies
   const user_id = req.cookies["user_id"];
@@ -208,7 +214,7 @@ app.get('/', (req, res) => {
   return res.redirect('/urls');
 });
 
-// BROWSE - GET method to /urls, renders our template that shows an index of all urls
+// BROWSE - GET, /urls, w Auth, shows index || error w/o Auth
 app.get("/urls", (req, res) => {
   // Anytime GET request sent to /urls - we check for cookies
   const user_id = req.cookies["user_id"];
@@ -235,7 +241,7 @@ app.get("/urls", (req, res) => {
   return res.render("urls_index", templateVars);
 });
 
-// READ - GET method to /urls/new, 
+// READ - GET /urls/new w Auth || to /login w/o 
 app.get("/urls/new", (req, res) => {
   // Anytime GET request to /urls/new -> we check first for cookies
   const user_id = req.cookies["user_id"];
@@ -253,7 +259,7 @@ app.get("/urls/new", (req, res) => {
   return res.render('urls_new', templateVars);
 });
 
-// READ - GET to /urls/("/:id") -> ROUTE parameter added to req.params.id in express
+// READ - GET /urls/("/:id") -> ROUTE param in req.params.id (Express feature)
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
@@ -273,6 +279,7 @@ app.get("/urls/:id", (req, res) => {
 });
 
 // READ - GET, redirects shortURL href to the website at longURL
+// NO Auth necessary
 app.get("/u/:id", (req, res) => {
   const reqShortURL = req.params.id; // the request shortURL typed into the bar
   
@@ -290,6 +297,10 @@ app.get("/u/:id", (req, res) => {
   return res.send('Error 404: invalid shortened URL');
 });
 
+
+// 
+// ----- Server Listen ----- 
+// 
 // This tells our server to listen on our port
 app.listen(PORT, () => {
   console.log(`Example app listening on port: ${PORT}!`);
