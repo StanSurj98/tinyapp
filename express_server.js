@@ -6,6 +6,8 @@ const express = require('express'); // Imports the express module
 const app = express();
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
 
 // 
 // ----- Helper Functions -----
@@ -18,16 +20,17 @@ const urlsForUser = require('./urlsForUser');
 // ---- Databases ----
 // 
 const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
+  // the test users below have non-hashed passwords
+  // userRandomID: {
+  //   id: "userRandomID",
+  //   email: "user@example.com",
+  //   password: "purple-monkey-dinosaur",
+  // },
+  // user2RandomID: {
+  //   id: "user2RandomID",
+  //   email: "user2@example.com",
+  //   password: "dishwasher-funk",
+  // },
 };
 
 const urlDatabase = {
@@ -69,6 +72,9 @@ app.post("/register", (req, res) => {
   // These two below we get from the forms for register
   const user_email = req.body.email;
   const user_password = req.body.password;
+  // Using bcrypt to hash the password
+  const hashedPassword = bcrypt.hashSync(user_password, 10);
+
   // if email/pass empty OR user already exists; error 400
   if (!user_email || !user_password) return res.status(400).send("Empty Field");
   if (getUserByEmail(users, user_email)) return res.status(400).send("Enter a unique Email address");
@@ -79,7 +85,7 @@ app.post("/register", (req, res) => {
   users[user_id] = {
     id: user_id,
     email: user_email,
-    password: user_password,
+    password: hashedPassword,
   }
 
   console.log(users);// to see if new user is added to global object
@@ -104,10 +110,11 @@ app.post('/login', (req, res) => {
   if (!user_email|| !user_password) return res.status(400).send("Empty Field");
   // 1. Compare entered email vs email in user object from database; error403 if not found
   if (! getUserByEmail(users, user_email)) return res.status(403).send("Invalid Credentials");
-  // 2. if found, compare entered password vs password in user object; error403 if !==
-  if (user_password !== user.password) return res.send(error403)
+  // 2. check if Hashed password is true to match or not
+  const passwordMatch = bcrypt.compareSync(user_password, user.password);
+  if (!passwordMatch) return res.status(403).send(`Invalid Credentials`)
   // 3. if both checks pass - set cookie to user_id value in user object from database
-  if (user_email === user.email && user_password === user.password) {
+  if (user_email === user.email && passwordMatch) {
     res.cookie("user_id", user.id);
     return res.redirect("/urls");
   }
