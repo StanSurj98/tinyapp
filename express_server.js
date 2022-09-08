@@ -83,14 +83,24 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
-// EDIT - POST method to /login for logging in with cookies
+// POST method to /login now with Authentication
 app.post('/login', (req, res) => {
+  const error403 = "Error 403 The email or password is incorrect";
   const user_email = req.body.email;
   const user_password = req.body.password;
+  // The function returns the user obj, we will assign that to a variable in this scope
+  const user = getUserByEmail(users, user_email);
+
   if (user_email === "" || user_password === "") return res.send("Error 400 Empty Field")
-  console.log(req.body);
-  // res.cookie(name, value, [,options]) <-- the params
-  res.cookie("user_id", req.body.user_id);
+  // 1. Need to compare given email with the email in the user object from database
+    // 1.1) if not found (function returns falsey) - return error 403
+  if (! getUserByEmail(users, user_email)) return res.send(error403);
+  // 2. if found, compare the given password with the password in that user object
+  // 2.1) if not matching - return error 403
+  if (user_password !== user.password) return res.send(error403)
+  // 3. if both checks pass - set cookie to user_id value in user object from database
+  res.cookie("user_id", user.id);
+  // 3.1) then redirect to /urls
   res.redirect("/urls");
 });
 
