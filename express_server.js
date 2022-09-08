@@ -227,10 +227,21 @@ app.get("/urls/:id", (req, res) => {
 });
 
 // READ - GET, redirects shortURL href to the website at longURL
-app.get("/u/:id", (req, res) => { // since also a GET method, unique path of /u/:id
-  const longURL = urlDatabase[req.params.id];
-  // we can now click the hyperlink on urls_show page, this is because of urls_show.ejs
-  return res.redirect(longURL);
+app.get("/u/:id", (req, res) => {
+  const shortURL = req.params.id; // the request shortURL typed into the bar
+  const longURL = urlDatabase[req.params.id]; // the VALUE at that shortURL (the longURL)
+  
+  // 1. let's check if the request url exists in our database
+  for (const key in urlDatabase) {
+    // if GIVEN/REQUESTED shortURL matches the shortURL KEY in database...
+    if (shortURL === key) {
+      // we must check for happy path, otherwise the first time we don't match, we get error
+      // we redirect to the VALUE of that shortURL id... the longURL it goes to
+      return res.redirect(longURL);
+    }
+  }
+  // 2. if not, we should send a relevant error message
+  return res.send('Error 404: invalid shortened URL');
 });
 
 // This tells our server to listen on our port
