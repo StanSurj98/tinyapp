@@ -158,32 +158,45 @@ app.get('/register', (req, res) => {
   return res.render('urls_register', templateVars);
 });
 
+// READ - GET method that redirects / to /urls
+app.get('/', (req, res) => {
+  res.redirect('/urls');
+});
+
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
 app.get("/urls", (req, res) => {
+  // Anytime GET request sent to /urls - we check for cookies
   const user_id = req.cookies["user_id"];
-  const userObj = users[user_id];
+  const userObj = users[user_id]; // that cookie corresponds to userObj
+  // if userObj is falsey (aka. we not logged in)
   if (!userObj) {
-    return res.redirect('/register');
+    return res.redirect('/login');
   }
+
+  // when using EJS template, MUST pass an object
   const templateVars = { 
     user: userObj,
     urls: urlDatabase
-  }; // when using EJS template, MUST pass an object
-  // EJS knows to look inside a "views" dir automatically for a "urls_index.ejs" file
+  };
+  // otherwise, redirect to /urls and render the index template
   return res.render("urls_index", templateVars);
 });
 
 // READ - GET method to /urls/new, 
 app.get("/urls/new", (req, res) => {
+  // Anytime GET request to /urls/new -> we check first for cookies
   const user_id = req.cookies["user_id"];
-  const userObj = users[user_id];
+  const userObj = users[user_id]; // cookies correspond to if userObj exists
+  // if userObj falsey (aka. not logged in)
   if (!userObj) {
-    return res.redirect('/register');
+    // redirects to login page
+    return res.redirect('/login');
   }
+
   const templateVars = {
     user: userObj,
   }
-  // we want to READ a page where we can submit a form to create a NEW shortened URL
+  // else if we are logged in, we send to the create new url page
   return res.render('urls_new', templateVars);
 });
 
