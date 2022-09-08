@@ -116,7 +116,7 @@ app.post("/urls/:id/delete", (req, res) => {
 // ADD - POST to /urls, creates new shortURL and posts another saved URL
 app.post('/urls', (req, res) => {
   // 1. checking if cookies for user_id exists
-  const user_id = req.cookies("user_id");
+  const user_id = req.cookies["user_id"];
   // 2. checking if that cookie id is a user id in our users database
   const userObj = users[user_id];
   if (! userObj) return res.send('Error 400 You are not logged in');
@@ -169,7 +169,15 @@ app.get('/register', (req, res) => {
 
 // READ - GET method that redirects / to /urls
 app.get('/', (req, res) => {
-  res.redirect('/urls');
+  // check for cookies
+  const user_id = req.cookies["user_id"];
+  const userObj = users[user_id];
+  // if userObj is falsey (not logged in)
+  if (! userObj) {
+    return res.redirect('/login');
+  }
+  // else if logged in, redirects to /urls
+  return res.redirect('/urls');
 });
 
 // BROWSE - GET method to /urls, renders our template that shows an index of all urls
@@ -178,7 +186,7 @@ app.get("/urls", (req, res) => {
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id]; // that cookie corresponds to userObj
   // if userObj is falsey (aka. we not logged in)
-  if (!userObj) {
+  if (! userObj) {
     return res.redirect('/login');
   }
 
