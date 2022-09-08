@@ -115,7 +115,13 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL
 app.post('/urls', (req, res) => {
-  // generate random string whenever a POST request sent, saves to urlDatabase the pair
+  // 1. checking if cookies for user_id exists
+  const user_id = req.cookies("user_id");
+  // 2. checking if that cookie id is a user id in our users database
+  const userObj = users[user_id];
+  if (! userObj) return res.send('Error 400 You are not logged in');
+
+  // if userObj does exist, we create the new URL
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
 
@@ -128,6 +134,7 @@ app.post('/urls', (req, res) => {
 
 // READ - GET method for /login page
 app.get('/login', (req, res) => {
+  // check if logged in by checking the cookie
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   // checks if userObj exists, we should be logged in at this point
@@ -143,6 +150,7 @@ app.get('/login', (req, res) => {
 
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
+  // we're going to check if there is an existing user_id from the cookies
   const user_id = req.cookies["user_id"];
   const userObj = users[user_id];
   // checks if userObj exists, we should be logged in at this point
@@ -151,10 +159,11 @@ app.get('/register', (req, res) => {
     return res.redirect('/urls');
   }
 
+  // otherwise, if user is not logged in, no cookies, we pass falsey val to the template
   const templateVars = { 
     user: null,
   };
-  // otherwise we just render the register page
+  // and render the register page
   return res.render('urls_register', templateVars);
 });
 
