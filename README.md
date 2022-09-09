@@ -1,39 +1,57 @@
-# TinyApp - Shorten your URLs 
-## Setup 
-Make sure you read the package.json and download all dependencies.
+# TinyApp Project
 
-In express_server.js, they are already required in under the:
+TinyApp is a full stack web application built with Node and Express that allows users to shorten long URLs (à la bit.ly).
 
-```//----- Requirements----- ``` 
+## Final Product
+
+!["screenshot description"](#)
+!["screenshot description"](#)
+
+## Dependencies
+
+- Node.js
+- Express
+- EJS
+- bcryptjs
+- cookie-session
+
+## Getting Started
+
+- Install all dependencies (using the `npm install` command).
+- Run the development web server using the `node express_server.js` or `npm start` command.
+
+
+## Setup  
+In `express_server.js`, the dependencies are already imported for users under the:
+
+```js
+//
+//----- Requirements ----- 
+//
+``` 
 
 section at the top. 
 
-Only alter the PORT if you must, otherwise run http://localhost:8080/ once you start the server.
+Feel free to alter the port as you need. Otherwise, after starting up the server, type in the below link in your browser searchbar:
+
+`http://localhost:8080/` 
+
+Just like that, you can start using TinyApp!
 
 
-## Starting the server
+## Make an account & Log in
+When not logged in, you are not able to create a shortened URL. Register with an email and password on the register page and create an account!
 
-In your console, type in: 
+Every account password is hashed using `bcryptjs` for added security, and user authentication is protected through an encrypted cookie with `cookie-session`.
 
-``` npm start ```
+## Creating new URLs and Editing URLs
+Use the header navigation tools at the top of the page to go to the relevant features. Here, enter the URLs you wish to shorten or alter an existing shortened URL to lead somewhere else!
 
-this will tell the server to listen to port: 8080 by default. Just like that, your server for TinyApp is now started!
-
-
-## How to use TinyApp
-### Making an account & logging in
-When not logged in, you are not able to create a shortened URL. Register with an email and password with the register page and make an account!
-
-Every account password is hashed for security, and each session has an encrypted cookie.
-
-### Creating new URLs and Editing URLs
-Click the corresponding buttons at the top of the header to direct you to the relevant features. Here, enter the URLs you wish to shorten or alter an existing shortened URL to lead somewhere else!
-
-### Going to a Shortened URL
+## Using a Shortened URL
 In your search bar, type in the following:
 
-http://localhost:8080/u/[shortURLhere]
+`http://localhost:8080/u/[shortURLhere]`
 
-Anyone can now access the website you are linking to with your shortened URL!
+Anyone may now access the website you link to with your shortened URL. 
 
 Thank you for using TinyApp!
