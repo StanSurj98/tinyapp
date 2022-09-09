@@ -9,7 +9,7 @@ const getUserByEmail = (database, user_email) => {
     }
   }
   // 2. if not found, return null
-  return null;
+  return undefined;
 };
 
 module.exports = {
