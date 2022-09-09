@@ -33,14 +33,15 @@ const users = {
 };
 
 const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "userRandomID",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "userRandomID",
-  }
+  // No longer relevant since the test users have non-hashed passwords
+  // "b2xVn2": {
+  //   longURL: "http://www.lighthouselabs.ca",
+  //   userID: "userRandomID",
+  // },
+  // "9sm5xK": {
+  //   longURL: "http://www.google.com",
+  //   userID: "userRandomID",
+  // }
 };
 
 
@@ -48,6 +49,7 @@ const urlDatabase = {
 // 
 // ----Middleware----
 // 
+// NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
 
 // Setting EJS as the view engine
 app.set("view engine", "ejs");
@@ -56,8 +58,8 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true })); 
 // will add data to "request" object under the key "body".
 
-// NOTE: Middleware that takes in (req, res, next) => {} NEEDS the "next" param
-app.use(morgan("dev")); // setup morgan to console.log for us
+// setup morgan to console.log for us
+app.use(morgan("dev"));
 
 // CookieSession for encrypted cookies
 app.use(cookieSession({
@@ -81,20 +83,20 @@ app.post("/register", (req, res) => {
   // Using bcrypt to hash the given password
   const hashedPassword = bcrypt.hashSync(user_password, 10);
 
-  // if email/pass empty OR user already exists; error 400
+  // 1. If email/pass fields empty OR user already exists; error 400
   if (!user_email || !user_password) return res.status(400).send("Empty Field");
   if (getUserByEmail(users, user_email)) return res.status(400).send("Enter a unique Email address");
 
-  // getting here, we can register, generate new unique id
+  // 2. getting here, we can register, generate new unique id
   const user_id = generateRandomString();
-  // add new user to global users database
+  // 3. add new user to global users database
   users[user_id] = {
     id: user_id,
     email: user_email,
     password: hashedPassword,
   }
+  console.log(users); // to see if new user is added to global object
 
-  console.log(users);// to see if new user is added to global object
   // When registering we SET the session cookie
   req.session.user_id = user_id;
   return res.redirect("/urls");
@@ -123,7 +125,7 @@ app.post('/login', (req, res) => {
   if (!passwordMatch) return res.status(403).send(`Invalid Credentials`)
   // 3. if both checks pass - set cookie to user_id value in user object from database
   if (user_email === user.email && passwordMatch) {
-    // 4. when logging in we set the session cookie to be the user.id encrypted
+    // 4. when logging in we set encrypted session cookie
     req.session.user_id = user.id;
     return res.redirect("/urls");
   }
@@ -131,18 +133,21 @@ app.post('/login', (req, res) => {
 
 // EDIT - POST to /urls/:id/edit with Auth
 app.post("/urls/:id/edit", (req, res) => {
-  // Anytime GET request sent to /urls - we check for cookies
+  // 1. Every post request, read session cookies
   const user_id = req.session.user_id;
   const userObj = users[user_id]; // that cookie corresponds to userObj
-  // if userObj is falsey (aka. we not logged in)
+  // 2. if userObj is falsey... not logged in or incorrect session cookie
   if (! userObj) {
+    // I want to return to /login below... but the rubric says error message so...?
     // return res.redirect('/login');
-    return res.send('Error 400: You are not logged in');
+    return res.status(400).send('You are not logged in');
   }
+
+  // 3. if logged in, filters this user's unique list of URLs
   const shortURL = req.params.id;
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
-  // changed this, shortURLs are now objects themselves. req.body.longURL is still the submitted form data for new longURL
-  thisUserURLs[shortURL].longURL = req.body.longURL; // updates the longURL but not shortURL
+  // 4. updates the longURL but not shortURL
+  thisUserURLs[shortURL].longURL = req.body.longURL;
   return res.redirect('/urls');
 });
 
@@ -151,10 +156,11 @@ app.post("/urls/:id/delete", (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.send('Error 400: You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in');
 
+  // 2. if so, deletes the entire object in urlDatabase
   const shortURL = req.params.id;
-  delete urlDatabase[shortURL]; // deletes the entire object in urlDatabase
+  delete urlDatabase[shortURL];
   return res.redirect('/urls');
 });
 
@@ -163,11 +169,12 @@ app.post('/urls/:id', (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.send('Error 400 You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in');
 
   // 2. checks if you own the particular URL
   const shortURL = req.params.id;
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
+  // 3. if not, error 404.
   if(!thisUserURLs[shortURL]) {
     return res.status(404).send('Could not find URL in your account');
   }
@@ -175,18 +182,17 @@ app.post('/urls/:id', (req, res) => {
 
 // ADD - POST to /urls, creates new shortURL and posts another saved URL with Auth
 app.post('/urls', (req, res) => {
-  // 1. checking if cookies for user_id exists
+  // 1. checks if you're logged in
   const user_id = req.session.user_id;
-  // 2. checking if that cookie id is a user id in our users database
   const userObj = users[user_id];
-  if (! userObj) return res.send('Error 400 You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in');
 
-  // if userObj does exist, we create the new URL
+  // 2. if so, create the new URL
   let shortURL = generateRandomString();
-  // at the NEW shortURL key, we will add BOTH the property longURL AND the userID property
+  // 3. at the NEW shortURL key, we will add BOTH the property longURL AND the userID property
   urlDatabase[shortURL] = {
     longURL: req.body.longURL,
-    userID: user_id, // this is found from the cookies
+    userID: user_id,
   };
   return res.redirect(`/urls/${shortURL}`);
 });
