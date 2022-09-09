@@ -203,139 +203,118 @@ app.post('/urls', (req, res) => {
 
 // READ - GET method for /login page
 app.get('/login', (req, res) => {
-  // check if logged in by checking the cookie
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  // checks if userObj exists, we should be logged in at this point
+  // 1. if logged in, go to /urls main page
   if(userObj) {
-    // redirects to /urls if so
     return res.redirect('/urls');
   }
+  // 2. send in template with null user if not logged in for empty header at /login page
   const templateVars = {
-    user: null, // at this point if we're at the login page, the headers should not have any user data yet
+    user: null,
   }
   return res.render('urls_login', templateVars);
 });
 
 // READ - GET method for our /register form
 app.get('/register', (req, res) => {
-  // we're going to check if there is an existing user_id from the cookies
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  // checks if userObj exists, we should be logged in at this point
+  // 1. if already logged in, go to main page
   if(userObj) {
-    // redirects to /urls if so
     return res.redirect('/urls');
   }
 
-  // otherwise, if user is not logged in, no cookies, we pass falsey val to the template
+  // 2. else we pass null user for empty header at /register
   const templateVars = { 
     user: null,
   };
-  // and render the register page
   return res.render('urls_register', templateVars);
 });
 
 // READ - GET, redirects / to /urls w Auth || to /login w/o
 app.get('/', (req, res) => {
-  // check for cookies
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  // if userObj is falsey (not logged in)
+  // 1. if userObj is falsey (not logged in)
   if (! userObj) {
     return res.redirect('/login');
   }
-  // else if logged in, redirects to /urls
+  // 2. else if logged in, redirects to /urls
   return res.redirect('/urls');
 });
 
 // BROWSE - GET, /urls, w Auth, shows index || error w/o Auth
 app.get("/urls", (req, res) => {
-  // Anytime GET request sent to /urls - we check for cookies
+  // 1. checks if you're logged in
   const user_id = req.session.user_id;
-  const userObj = users[user_id]; // that cookie corresponds to userObj
-  // if userObj is falsey (aka. we not logged in)
-  if (! userObj) {
-    // return res.redirect('/login');
-    return res.send('Error 400: You are not logged in');
-  }
+  const userObj = users[user_id];
+  if (! userObj) return res.status(400).send('You are not logged in');
 
-  // We must filter urls by the logged in user's cookies ONLY
-  // 1. create our helper function to filter the relevant user_id's URLs only
-  // 2. then pass those as the template vars below into the urls_index view
-  // 3. what about logged in and empty object?
-    // create a check, if empty object, don't display table in urls_index view
+  // 2. if so, filter the urls belonging to user
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
 
-  // when using EJS template, MUST pass an object
+  // 3. pass only those URLs into index template to show our unique list
   const templateVars = { 
     user: userObj,
     thisUserURLs: thisUserURLs,
   };
-  // otherwise, redirect to /urls and render the index template
   return res.render("urls_index", templateVars);
 });
 
 // READ - GET /urls/new w Auth || to /login w/o 
 app.get("/urls/new", (req, res) => {
-  // Anytime GET request to /urls/new -> we check first for cookies
   const user_id = req.session.user_id;
-  const userObj = users[user_id]; // cookies correspond to if userObj exists
-  // if userObj falsey (aka. not logged in)
+  const userObj = users[user_id];
+  // 1. instead of erroring, we go to /login this time
   if (!userObj) {
-    // redirects to login page
     return res.redirect('/login');
   }
 
+  // 2. else we pass the entire userObj so we can render correct information
   const templateVars = {
     user: userObj,
   }
-  // else if we are logged in, we send to the create new url page
   return res.render('urls_new', templateVars);
 });
 
 // READ - GET /urls/("/:id") -> ROUTE param in req.params.id (Express feature)
 app.get("/urls/:id", (req, res) => {
-  // checks login cookies
+  // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (!userObj) {
-    // return res.redirect('/register');
-    return res.status(400).send('You are not logged in');
-  }
+  // Again, I wanted to reroute to /login, but rubrik says send an error...
+  if (! userObj) return res.status(400).send('You are not logged in');
 
-  // checks THIS user's unique URLs
+  // 2. checks THIS user's unique URLs, if not found/doesn't own... error
   const shortURL = req.params.id;
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
   if(!thisUserURLs[shortURL]) {
     return res.status(404).send('Could not find URL in your account');
   }
+  // 3. else pass the unique list to urls_show for rendering
   const templateVars = {
     id: shortURL,
     longURL: thisUserURLs[shortURL].longURL,
     user: userObj,
   };
-  // we want to render the page that shows us our single url
   return res.render("urls_show", templateVars);
 });
 
 // READ - GET, redirects shortURL href to the website at longURL
 // NO Auth necessary
 app.get("/u/:id", (req, res) => {
-  const reqShortURL = req.params.id; // the request shortURL typed into the bar
-  
+  const reqShortURL = req.params.id;
   // 1. let's check if the request url exists in our database
   for (const shortURL in urlDatabase) {
     const longURL = urlDatabase[shortURL].longURL; // the VALUE at db shortURL (the longURL)
-    // if REQUESTED shortURL matches the db shortURL
     if (reqShortURL === shortURL) {
-      // we must check for happy path, otherwise the first time we don't match, we get error
-      // we redirect to the VALUE of that shortURL id... the longURL it goes to
+      // 2. check for happy path, otherwise the first time we don't match, we get error
       return res.redirect(longURL);
     }
   }
-  // 2. if not, we should send a relevant error message
-  return res.send('Error 404: invalid shortened URL');
+  // 3. if not, we should send a relevant error message
+  return res.status(404).send('Invalid shortened URL');
 });
 
 // CATCHALL - Error 404 not found
