@@ -1,23 +1,19 @@
-// As of this commit version - everything working according to rubric, will push and create new branch to refactor code.
-
 // 
 // ----- Requirements -----
 // 
 const PORT = 8080; // Default port 8080
 const express = require('express'); // Imports the express module
 const app = express();
-const morgan = require('morgan');
-const bcrypt = require('bcryptjs');
-const cookieSession = require('cookie-session')
+const morgan = require('morgan'); // Morgan helps with console.log()
+const bcrypt = require('bcryptjs'); // bcrypt necessary password hashing
+const cookieSession = require('cookie-session') // cookieSession adds encrypted cookies
 
 
 
 // 
 // ----- Helper Functions -----
 // 
-const generateRandomString = require('./generateRandomString');
-const { getUserByEmail } = require('./helpers');
-const urlsForUser = require('./urlsForUser');
+const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
 
 // 
 // ---- Databases ----
