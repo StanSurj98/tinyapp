@@ -18,31 +18,9 @@ const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers
 // 
 // ---- Databases ----
 // 
-const users = {
-  // the test users below have non-hashed passwords
-  // userRandomID: {
-  //   id: "userRandomID",
-  //   email: "user@example.com",
-  //   password: "purple-monkey-dinosaur",
-  // },
-  // user2RandomID: {
-  //   id: "user2RandomID",
-  //   email: "user2@example.com",
-  //   password: "dishwasher-funk",
-  // },
-};
+const users = {};
 
-const urlDatabase = {
-  // No longer relevant since the test users have non-hashed passwords
-  // "b2xVn2": {
-  //   longURL: "http://www.lighthouselabs.ca",
-  //   userID: "userRandomID",
-  // },
-  // "9sm5xK": {
-  //   longURL: "http://www.google.com",
-  //   userID: "userRandomID",
-  // }
-};
+const urlDatabase = {};
 
 
 
@@ -95,8 +73,6 @@ app.post("/register", (req, res) => {
     email: user_email,
     password: hashedPassword,
   }
-  console.log(users); // to see if new user is added to global object
-
   // When registering we SET the session cookie
   req.session.user_id = user_id;
   return res.redirect("/urls");
@@ -327,6 +303,5 @@ app.get('*', (req, res) => {
 // 
 // This tells our server to listen on our port
 app.listen(PORT, () => {
-  console.log(`Example app listening on port: ${PORT}!`);
-  console.log(users); // Want to see the initial users database
+  console.log(`TinyApp listening on port: ${PORT}!`);
 });

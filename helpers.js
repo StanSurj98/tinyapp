@@ -15,8 +15,8 @@ const getUserByEmail = (database, user_email) => {
 
 // A function to help generate unique alphanumeric strings
 const generateRandomString = () => {
-  const length = 6; // for a 6 digit random string
-  const char = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'; // the characters we allow
+  const length = 6;
+  const char = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   let results = "";
   // loop through the characters at a random order, char[randomIndex from num generator]
