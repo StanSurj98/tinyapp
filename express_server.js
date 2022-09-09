@@ -116,7 +116,7 @@ app.post("/urls/:id/edit", (req, res) => {
   if (! userObj) {
     // I want to return to /login below... but the rubric says error message so...?
     // return res.redirect('/login');
-    return res.status(400).send('You are not logged in');
+    return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
   }
 
   // 3. if logged in, filters this user's unique list of URLs
@@ -132,7 +132,7 @@ app.post("/urls/:id/delete", (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.status(400).send('You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
 
   // 2. if so, deletes the entire object in urlDatabase
   const shortURL = req.params.id;
@@ -145,7 +145,7 @@ app.post('/urls/:id', (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.status(400).send('You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
 
   // 2. checks if you own the particular URL
   const shortURL = req.params.id;
@@ -161,7 +161,7 @@ app.post('/urls', (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.status(400).send('You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
 
   // 2. if so, create the new URL
   let shortURL = generateRandomString();
@@ -225,7 +225,7 @@ app.get("/urls", (req, res) => {
   // 1. checks if you're logged in
   const user_id = req.session.user_id;
   const userObj = users[user_id];
-  if (! userObj) return res.status(400).send('You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
 
   // 2. if so, filter the urls belonging to user
   const thisUserURLs = urlsForUser(user_id, urlDatabase);
@@ -260,7 +260,7 @@ app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
   const userObj = users[user_id];
   // Again, I wanted to reroute to /login, but rubrik says send an error...
-  if (! userObj) return res.status(400).send('You are not logged in');
+  if (! userObj) return res.status(400).send('You are not logged in. Please <a href="/login">try again<a>');
 
   // 2. checks THIS user's unique URLs, if not found/doesn't own... error
   const shortURL = req.params.id;
