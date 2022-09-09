@@ -334,6 +334,10 @@ app.get("/u/:id", (req, res) => {
   return res.send('Error 404: invalid shortened URL');
 });
 
+// CATCHALL - Error 404 not found
+app.get('*', (req, res) => {
+  res.status(404).send('The page you are looking for does not exist.');
+});
 
 // 
 // ----- Server Listen ----- 
