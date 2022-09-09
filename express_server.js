@@ -1,3 +1,5 @@
+// As of this commit version - everything working according to rubric, will push and create new branch to refactor code.
+
 // 
 // ----- Requirements -----
 // 
